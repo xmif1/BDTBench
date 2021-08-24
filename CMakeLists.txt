@@ -11,6 +11,11 @@ set(CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
   )
 
+#Define ROOTbench source tree
+set(ROOTBENCH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+include(AddRootBench)
+
 # You need first to tell CMake where to find the ROOT installation. This can either be the
 # final ROOT installation or a local build directory. In both cases it is using
 # the $ROOTSYS environment variable to locate it.
@@ -43,7 +48,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 include(GoogleBenchmark)
-include(PytestBenchmark)
 include(xgboost)
 
 #---Add ROOT include directories and used compilation flags
