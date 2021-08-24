@@ -48,7 +48,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 include(GoogleBenchmark)
-include(xgboost)
+include(FindXGBoost)
 
 #---Add ROOT include directories and used compilation flags
 include_directories(${ROOT_INCLUDE_DIRS})
