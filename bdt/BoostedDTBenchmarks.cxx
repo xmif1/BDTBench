@@ -175,6 +175,9 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
       }
 
       iter_c++;
+
+      // Free XGBoost related memory
+      safe_xgboost(XGBoosterFree(xgbooster))
    }
 
    if(mem_stats){
@@ -185,6 +188,7 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
    // Teardown
    delete sigTree;
    delete bkgTree;
+   xg_train_data->free();
 
    outputFile->Close();
    delete outputFile;
