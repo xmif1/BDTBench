@@ -13,7 +13,8 @@
 
 #include "benchmark/benchmark.h"
 
-#include "MakeRandomTTree.h"
+#include "utils/MakeRandomTTree.h"
+#include "utils/root2xgboost.h"
 
 using namespace TMVA::Experimental;
 using namespace std;
