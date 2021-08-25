@@ -156,7 +156,7 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
    for(auto _: state){
       // Set the options for the BoosterHandle instance that will be trained...
       xgbooster_opts opts;
-      opts.push_back(kv_pair("max_depth", std::to_string((int) state.range(1))));
+      opts.push_back(kv_pair("max_depth", std::to_string((int) state.range(1)).c_str()));
 
       // Get current memory usage statistics after setup
       if(mem_stats && iter_c == 0){
