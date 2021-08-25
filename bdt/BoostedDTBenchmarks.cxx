@@ -193,7 +193,7 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
    outputFile->Close();
    delete outputFile;
 }
-BENCHMARK(BM_TMVA_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}});
+BENCHMARK(BM_XGBOOST_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}});
 
 static void BM_TMVA_BDTTesting(benchmark::State &state){
    // Parameters
