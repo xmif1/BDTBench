@@ -64,5 +64,9 @@ if(coverage)
   set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 endif()
 
+#---Add the support libraries.
+add_subdirectory(include)
+add_subdirectory(lib)
+
 #---Add all the benchmark sub-directories on this repository
 add_subdirectory(bdt)
