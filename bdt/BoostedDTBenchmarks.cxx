@@ -267,7 +267,7 @@ BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4
 static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    // Parameters
    UInt_t nVars = 4;
-   UInt_t nEvents = 500;
+   UInt_t nEvents = 250; // half size since DataLoader requires test data to be split between signal and background...
    Bool_t mem_stats = (state.range(0) == 2000) && (state.range(1) == 10);
 
    // Memory benchmark data placeholder
@@ -280,8 +280,8 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    TFile* outputFile = TFile::Open(outfileName, "RECREATE");
 
    // Set up (create one additional event to silence TMVA DataLoader error for no training events)
-   TTree *testTree = genTree("testTree", nEvents + 1, nVars,0.3, 0.5, 102);
-   TTree *trainBKGTree = genTree("bkgTree", 1, nVars,0.3, 0.5, 103);
+   TTree *testTree = genTree("testTree", nEvents + 1, nVars, 0.3, 0.5, 102);
+   TTree *trainBKGTree = genTree("bkgTree", nEvents + 1, nVars, 0.3, 0.5, 103);
 
    // Prepare a DataLoader instance, registering the testing TTrees
    auto *dataloader = new TMVA::DataLoader("bdt_xgb_bench");
@@ -298,7 +298,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
 
    // Prepare the testing data set and convert it to an XGBoost readable format
    dataloader->PrepareTrainingAndTestTree("",
-                       Form("SplitMode=Block:nTrain_Signal=%i:nTrain_Background=%i:nTest_Signal=%i:!V", 1, 1, nEvents));
+      Form("SplitMode=Block:nTrain_Signal=%i:nTrain_Background=%i:nTest_Signal=%i:nTest_Background=%i:!V", 1, 1, nEvents, nEvents));
    xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
 
    // Benchmarking
