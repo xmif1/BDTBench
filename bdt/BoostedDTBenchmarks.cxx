@@ -307,6 +307,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       // Load the trained booster model...
       string fname = "BDT_" + to_string(state.range(0)) + "_" + to_string(state.range(1)) + ".model";
       BoosterHandle xgbooster;
+      XGBoosterCreate(0, 0, &xgbooster);
       safe_xgboost(XGBoosterLoadModel(xgbooster, fname.c_str()))
 
       // Get current memory usage statistics after setup
