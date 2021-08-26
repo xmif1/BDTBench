@@ -265,7 +265,7 @@ BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4
 static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    // Parameters
    UInt_t nVars = 4;
-   UInt_t nEvents = 500;
+   UInt_t nEvents = 502; // Create one additional event to silence TMVA DataLoader error for no training events
    Bool_t mem_stats = (state.range(0) == 2000) && (state.range(1) == 10);
 
    // Memory benchmark data placeholder
@@ -293,7 +293,8 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    }
 
    // Prepare the testing data set and convert it to an XGBoost readable format
-   dataloader->PrepareTrainingAndTestTree("", Form("SplitMode=Block:nTest_Signal=%i:!V", nEvents));
+   dataloader->PrepareTrainingAndTestTree("",
+                       Form("SplitMode=Block:nTest_Signal=%i:nTrain_Signal=%i:nTrain_Background=%1:!V", nEvents, 1, 1));
    xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
 
    // Benchmarking
@@ -313,7 +314,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       // Prepare the necessary data structures and carry out the predictions on the (converted) testing data set...
       bst_ulong output_length;
       const Float_t *output_result;
-      safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, 0, &output_length, &output_result))
+      safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, &output_length, &output_result))
 
       // Maintain Memory statistics (independent from Google Benchmark)
       if(mem_stats && iter_c == 0){
