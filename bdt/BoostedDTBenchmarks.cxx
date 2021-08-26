@@ -176,6 +176,10 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
 
       iter_c++;
 
+      // Save XGBoost trained booster instance
+      string fname = "./bdt_xgb_bench/BST_" to_string(state.range(0)) + "_" + to_string(state.range(1) + ".model");
+      safe_xgboost(XGBoosterSaveModel(xgbooster, fname.c_str()))
+
       // Free XGBoost related memory
       safe_xgboost(XGBoosterFree(xgbooster))
    }
