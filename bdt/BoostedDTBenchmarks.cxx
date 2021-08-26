@@ -267,7 +267,7 @@ BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4
 static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    // Parameters
    UInt_t nVars = 4;
-   UInt_t nEvents = 502; // Create one additional event to silence TMVA DataLoader error for no training events
+   UInt_t nEvents = 500;
    Bool_t mem_stats = (state.range(0) == 2000) && (state.range(1) == 10);
 
    // Memory benchmark data placeholder
@@ -279,12 +279,14 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    TString outfileName( "bdt_xgb_bench_test_output.root" );
    TFile* outputFile = TFile::Open(outfileName, "RECREATE");
 
-   // Set up
-   TTree *testTree = genTree("testTree", nEvents, nVars,0.3, 0.5, 102);
+   // Set up (create one additional event to silence TMVA DataLoader error for no training events)
+   TTree *testTree = genTree("testTree", nEvents + 1, nVars,0.3, 0.5, 102);
+   TTree *trainBKGTree = genTree("bkgTree", 1, nVars,0.3, 0.5, 103);
 
    // Prepare a DataLoader instance, registering the testing TTrees
    auto *dataloader = new TMVA::DataLoader("bdt_xgb_bench");
    dataloader->AddSignalTree(testTree);
+   dataloader->AddBackgroundTree(trainBKGTree);
 
    // Register variables in dataloader, using naming convention for randomly generated TTrees in MakeRandomTTree.h
    for(UInt_t i = 0; i < nVars; i++){
@@ -296,7 +298,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
 
    // Prepare the testing data set and convert it to an XGBoost readable format
    dataloader->PrepareTrainingAndTestTree("",
-                       Form("SplitMode=Block:nTest_Signal=%i:nTrain_Signal=%i:nTrain_Background=%i:!V", nEvents, 1, 1));
+                       Form("SplitMode=Block:nTrain_Signal=%i:nTrain_Background=%i:nTest_Signal=%i:!V", 1, 1, nEvents));
    xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
 
    // Benchmarking
@@ -339,6 +341,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
 
    // Teardown
    delete testTree;
+   delete trainBKGTree;
 
    outputFile->Close();
    delete outputFile;
