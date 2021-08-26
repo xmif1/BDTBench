@@ -307,7 +307,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       // Load the trained booster model...
       string fname = "BDT_" + to_string(state.range(0)) + "_" + to_string(state.range(1)) + ".model";
       BoosterHandle xgbooster;
-      XGBoosterCreate(0, 0, &xgbooster);
+      safe_xgboost(XGBoosterCreate(0, 0, &xgbooster))
       safe_xgboost(XGBoosterLoadModel(xgbooster, fname.c_str()))
 
       // Get current memory usage statistics after setup
@@ -317,9 +317,13 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       }
 
       // Prepare the necessary data structures and carry out the predictions on the (converted) testing data set...
-      bst_ulong output_length;
+      bst_ulong output_dim;
+      const bst_ulong *output_shape;
       const Float_t *output_result;
-      safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, &output_length, &output_result))
+      //safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, 0, &output_length, &output_result))
+      string opts = "{\"type\": 0, \"training\": false, \"iteration_begin\": 0, \"iteration_end\": 0, \"strict_shape\": true}";
+      safe_xgboost(XGBoosterPredictFromDMatrix(xgbooster, (xg_test_data->sb_dmats)[0], opts.c_str(), &output_shape,
+                                               &output_dim, &output_result))
 
       // Maintain Memory statistics (independent from Google Benchmark)
       if(mem_stats && iter_c == 0){
