@@ -313,7 +313,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       // Prepare the necessary data structures and carry out the predictions on the (converted) testing data set...
       bst_ulong output_length;
       const Float_t *output_result;
-      safe_xgboost(XGBoosterPredict(xgbooster, (xg_train_data->sb_dmats)[0], 0, 0, 0, &output_length, &output_result))
+      safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, 0, &output_length, &output_result))
 
       // Maintain Memory statistics (independent from Google Benchmark)
       if(mem_stats && iter_c == 0){
