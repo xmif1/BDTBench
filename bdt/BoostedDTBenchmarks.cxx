@@ -111,7 +111,8 @@ static void BM_TMVA_BDTTraining(benchmark::State &state){
    outputFile->Close();
    delete outputFile;
 }
-BENCHMARK(BM_TMVA_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
+//BENCHMARK(BM_TMVA_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
+BENCHMARK(BM_TMVA_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1}});
 
 static void BM_XGBOOST_BDTTraining(benchmark::State &state){
    // Parameters
@@ -260,7 +261,8 @@ static void BM_TMVA_BDTTesting(benchmark::State &state){
    // Teardown
    outputFile->Close();
 }
-BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
+//BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
+BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1}});
 
 static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    // Parameters
@@ -294,7 +296,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
 
    // Prepare the testing data set and convert it to an XGBoost readable format
    dataloader->PrepareTrainingAndTestTree("",
-                       Form("SplitMode=Block:nTest_Signal=%i:nTrain_Signal=%i:nTrain_Background=%1:!V", nEvents, 1, 1));
+                       Form("SplitMode=Block:nTest_Signal=%i:nTrain_Signal=%i:nTrain_Background=%i:!V", nEvents, 1, 1));
    xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
 
    // Benchmarking
