@@ -34,7 +34,7 @@ static void BM_TMVA_BDTTraining(benchmark::State &state){
    TString outfileName( "bdt_tmva_bench_train_output.root" );
    TFile* outputFile = TFile::Open(outfileName, "RECREATE");
 
-   // Set up (generate one extra event for testing)
+   // Set up
    TTree *sigTree = genTree("sigTree", nEvents, nVars,0.3, 0.5, 100);
    TTree *bkgTree = genTree("bkgTree", nEvents, nVars,-0.3, 0.5, 101);
 
@@ -128,7 +128,7 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
    TString outfileName( "bdt_xgb_bench_train_output.root" );
    TFile* outputFile = TFile::Open(outfileName, "RECREATE");
 
-   // Set up (generate one extra event for testing)
+   // Set up
    TTree *sigTree = genTree("sigTree", nEvents, nVars,0.3, 0.5, 100);
    TTree *bkgTree = genTree("bkgTree", nEvents, nVars,-0.3, 0.5, 101);
 
@@ -177,7 +177,7 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
       iter_c++;
 
       // Save XGBoost trained booster instance
-      string fname = "./bdt_xgb_bench/BST_" + to_string(state.range(0)) + "_" + to_string(state.range(1) + ".model");
+      string fname = "BDT_" + to_string(state.range(0)) + "_" + to_string(state.range(1)) + ".model";
       safe_xgboost(XGBoosterSaveModel(xgbooster, fname.c_str()))
 
       // Free XGBoost related memory
@@ -211,7 +211,7 @@ static void BM_TMVA_BDTTesting(benchmark::State &state){
    double mem_res = 0.0;
 
    // Open output file
-   TString outfileName( "bdt_bench_test_output.root" );
+   TString outfileName( "bdt_tmva_bench_test_output.root" );
    TFile* outputFile = TFile::Open(outfileName, "RECREATE");
 
    // Set up
@@ -261,5 +261,85 @@ static void BM_TMVA_BDTTesting(benchmark::State &state){
    outputFile->Close();
 }
 BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
+
+static void BM_XGBOOST_BDTTesting(benchmark::State &state){
+   // Parameters
+   UInt_t nVars = 4;
+   UInt_t nEvents = 500;
+   Bool_t mem_stats = (state.range(0) == 2000) && (state.range(1) == 10);
+
+   // Memory benchmark data placeholder
+   ProcInfo_t pinfo;
+   Long_t init_mem_res, term_mem_res; init_mem_res = term_mem_res = 0;
+   double mem_res = 0.0;
+
+   // Open output file
+   TString outfileName( "bdt_xgb_bench_test_output.root" );
+   TFile* outputFile = TFile::Open(outfileName, "RECREATE");
+
+   // Set up
+   TTree *testTree = genTree("testTree", nEvents, nVars,0.3, 0.5, 102);
+
+   // Prepare a DataLoader instance, registering the testing TTrees
+   auto *dataloader = new TMVA::DataLoader("bdt_xgb_bench");
+   dataloader->AddSignalTree(testTree);
+
+   // Register variables in dataloader, using naming convention for randomly generated TTrees in MakeRandomTTree.h
+   for(UInt_t i = 0; i < nVars; i++){
+      string var_name = "var" + to_string(i);
+      string var_leaflist = var_name + "/F";
+
+      dataloader->AddVariable(var_name.c_str(), 'D');
+   }
+
+   // Prepare the testing data set and convert it to an XGBoost readable format
+   dataloader->PrepareTrainingAndTestTree("", Form("SplitMode=Block:nTest_Signal=%i:!V", nEvents));
+   xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
+
+   // Benchmarking
+   UInt_t iter_c = 0;
+   for(auto _: state){
+      // Load the trained booster model...
+      string fname = "BDT_" + to_string(state.range(0)) + "_" + to_string(state.range(1)) + ".model";
+      BoosterHandle xgbooster;
+      safe_xgboost(XGBoosterLoadModel(xgbooster, fname.c_str()))
+
+      // Get current memory usage statistics after setup
+      if(mem_stats && iter_c == 0){
+         gSystem->GetProcInfo(&pinfo);
+         init_mem_res = pinfo.fMemResident;
+      }
+
+      // Prepare the necessary data structures and carry out the predictions on the (converted) testing data set...
+      bst_ulong output_length;
+      const Float_t *output_result;
+      safe_xgboost(XGBoosterPredict(xgbooster, (xg_train_data->sb_dmats)[0], 0, 0, 0, &output_length, &output_result))
+
+      // Maintain Memory statistics (independent from Google Benchmark)
+      if(mem_stats && iter_c == 0){
+         gSystem->GetProcInfo(&pinfo);
+         term_mem_res = pinfo.fMemResident;
+         mem_res += (double) (term_mem_res - init_mem_res);
+      }
+
+      iter_c++;
+
+      // Lastly, free any XGBoost related data structures to prevent memory leaks.
+      xg_test_data->free();
+      safe_xgboost(XGBoosterFree(xgbooster));
+   }
+
+   if(mem_stats){
+      mem_res *= iter_c;
+      state.counters["Resident Memory"] = benchmark::Counter(mem_res, benchmark::Counter::kAvgIterations);
+   }
+
+   // Teardown
+   delete testTree;
+
+   outputFile->Close();
+   delete outputFile;
+}
+BENCHMARK(BM_XGBOOST_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}});
 
 BENCHMARK_MAIN();
