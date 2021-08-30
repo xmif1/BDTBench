@@ -190,6 +190,7 @@ xgboost_data* ROOTToXGBoost(const TMVA::DataSetInfo& dataset_info, TMVA::Types::
 BoosterHandle xgboost_train(xgboost_data* data, xgbooster_opts* opts, UInt_t n_iter){
     BoosterHandle booster;
     safe_xgboost(XGBoosterCreate(data->sb_dmats, 1, &booster)) // Initialise a BoosterHandle instance
+    safe_xgboost(XGBoosterSetParam(booster, "nthread", "1"))
 
     for(auto opt: *opts){ // For each specified option, set the booster parameters...
         safe_xgboost(XGBoosterSetParam(booster, opt.first, opt.second))

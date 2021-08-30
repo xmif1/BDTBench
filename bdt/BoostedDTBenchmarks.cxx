@@ -307,6 +307,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       string fname = "BDT_" + to_string(state.range(0)) + "_" + to_string(state.range(1)) + ".model";
       BoosterHandle xgbooster;
       safe_xgboost(XGBoosterCreate(0, 0, &xgbooster))
+      safe_xgboost(XGBoosterSetParam(xgbooster, "nthread", "1"))
       safe_xgboost(XGBoosterLoadModel(xgbooster, fname.c_str()))
 
       xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
