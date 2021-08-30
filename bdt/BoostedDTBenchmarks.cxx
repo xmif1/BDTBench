@@ -322,7 +322,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       bst_ulong output_dim;
       const bst_ulong *output_length;
       const Float_t *output_result;
-      safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, 0, &output_length, &output_result))
+      safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, &output_length, &output_result))
 //      string opts = "{\"type\": 0, \"training\": false, \"iteration_begin\": 0, \"iteration_end\": 0, \"strict_shape\": true}";
 //      safe_xgboost(XGBoosterPredictFromDMatrix(xgbooster, (xg_test_data->sb_dmats)[0], opts.c_str(), &output_shape,
 //                                               &output_dim, &output_result))
