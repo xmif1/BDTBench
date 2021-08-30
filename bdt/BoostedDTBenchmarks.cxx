@@ -319,8 +319,7 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       }
 
       // Prepare the necessary data structures and carry out the predictions on the (converted) testing data set...
-      bst_ulong output_dim;
-      const bst_ulong *output_length;
+      bst_ulong output_length;
       const Float_t *output_result;
       safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, &output_length, &output_result))
 //      string opts = "{\"type\": 0, \"training\": false, \"iteration_begin\": 0, \"iteration_end\": 0, \"strict_shape\": true}";
