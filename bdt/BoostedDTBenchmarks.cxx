@@ -299,7 +299,6 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    // Prepare the testing data set and convert it to an XGBoost readable format
    dataloader->PrepareTrainingAndTestTree("",
       Form("SplitMode=Block:nTrain_Signal=%i:nTrain_Background=%i:nTest_Signal=%i:nTest_Background=%i:!V", 1, 1, nEvents, nEvents));
-   xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
 
    // Benchmarking
    UInt_t iter_c = 0;
@@ -309,6 +308,8 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       BoosterHandle xgbooster;
       safe_xgboost(XGBoosterCreate(0, 0, &xgbooster))
       safe_xgboost(XGBoosterLoadModel(xgbooster, fname.c_str()))
+
+      xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
 
       // Get current memory usage statistics after setup
       if(mem_stats && iter_c == 0){
@@ -320,10 +321,10 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       bst_ulong output_dim;
       const bst_ulong *output_shape;
       const Float_t *output_result;
-      //safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, 0, &output_length, &output_result))
-      string opts = "{\"type\": 0, \"training\": false, \"iteration_begin\": 0, \"iteration_end\": 0, \"strict_shape\": true}";
-      safe_xgboost(XGBoosterPredictFromDMatrix(xgbooster, (xg_test_data->sb_dmats)[0], opts.c_str(), &output_shape,
-                                               &output_dim, &output_result))
+      safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, 0, &output_length, &output_result))
+//      string opts = "{\"type\": 0, \"training\": false, \"iteration_begin\": 0, \"iteration_end\": 0, \"strict_shape\": true}";
+//      safe_xgboost(XGBoosterPredictFromDMatrix(xgbooster, (xg_test_data->sb_dmats)[0], opts.c_str(), &output_shape,
+//                                               &output_dim, &output_result))
 
       // Maintain Memory statistics (independent from Google Benchmark)
       if(mem_stats && iter_c == 0){
