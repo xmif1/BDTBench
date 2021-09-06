@@ -93,9 +93,6 @@ static void BM_TMVA_BDTTraining(benchmark::State &state){
       factory->fMethodsMap.clear();
       delete factory;
 
-      // DEBUG
-      // cout << "[DEBUG] " << key << ": res_mem_init = " << (double) init_mem_res << ", res_mem_term = " << (double) term_mem_res << endl;
-
       iter_c++;
    }
 
@@ -111,14 +108,13 @@ static void BM_TMVA_BDTTraining(benchmark::State &state){
    outputFile->Close();
    delete outputFile;
 }
-//BENCHMARK(BM_TMVA_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
-BENCHMARK(BM_TMVA_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1}});
+BENCHMARK(BM_TMVA_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
 
 static void BM_XGBOOST_BDTTraining(benchmark::State &state){
    // Parameters
    UInt_t nVars = 4;
    UInt_t nEvents = 500;
-   Bool_t mem_stats = (state.range(0) == 2000) && (state.range(1) == 10);
+   Bool_t mem_stats = (state.range(0) == 2000) && (state.range(1) == 10) && (state.range(2) == 1);
 
    // Memory benchmark data placeholder
    ProcInfo_t pinfo;
@@ -158,6 +154,8 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
       // Set the options for the BoosterHandle instance that will be trained...
       xgbooster_opts opts;
       opts.push_back(kv_pair("max_depth", std::to_string((int) state.range(1)).c_str()));
+      opts.push_back(kv_pair("nthread", std::to_string((int) state.range(2)).c_str()));
+      opts.push_back(kv_pair("eta", "0.01"));
 
       // Get current memory usage statistics after setup
       if(mem_stats && iter_c == 0){
@@ -198,7 +196,7 @@ static void BM_XGBOOST_BDTTraining(benchmark::State &state){
    outputFile->Close();
    delete outputFile;
 }
-BENCHMARK(BM_XGBOOST_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}});
+BENCHMARK(BM_XGBOOST_BDTTraining)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
 
 static void BM_TMVA_BDTTesting(benchmark::State &state){
    // Parameters
@@ -261,14 +259,14 @@ static void BM_TMVA_BDTTesting(benchmark::State &state){
    // Teardown
    outputFile->Close();
 }
-//BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
-BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1}});
+BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
+//BENCHMARK(BM_TMVA_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1}});
 
 static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    // Parameters
    UInt_t nVars = 4;
    UInt_t nEvents = 250; // half size since DataLoader requires test data to be split between signal and background...
-   Bool_t mem_stats = (state.range(0) == 2000) && (state.range(1) == 10);
+   Bool_t mem_stats = (state.range(0) == 2000) && (state.range(1) == 10) && (state.range(2) == 1);
 
    // Memory benchmark data placeholder
    ProcInfo_t pinfo;
@@ -307,7 +305,9 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       string fname = "BDT_" + to_string(state.range(0)) + "_" + to_string(state.range(1)) + ".model";
       BoosterHandle xgbooster;
       safe_xgboost(XGBoosterCreate(0, 0, &xgbooster))
-      safe_xgboost(XGBoosterSetParam(xgbooster, "nthread", "1"))
+      safe_xgboost(XGBoosterSetParam(xgbooster, "max_depth", std::to_string((int) state.range(1)).c_str()))
+      safe_xgboost(XGBoosterSetParam(xgbooster, "nthread", std::to_string((int) state.range(2)).c_str()))
+      safe_xgboost(XGBoosterSetParam(xgbooster, "eta", "0.01"))
       safe_xgboost(XGBoosterLoadModel(xgbooster, fname.c_str()))
 
       xgboost_data* xg_test_data = ROOTToXGBoost(dataloader->GetDefaultDataSetInfo(), TMVA::Types::kTesting);
@@ -322,9 +322,6 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
       bst_ulong output_length;
       const Float_t *output_result;
       safe_xgboost(XGBoosterPredict(xgbooster, (xg_test_data->sb_dmats)[0], 0, 0, &output_length, &output_result))
-//      string opts = "{\"type\": 0, \"training\": false, \"iteration_begin\": 0, \"iteration_end\": 0, \"strict_shape\": true}";
-//      safe_xgboost(XGBoosterPredictFromDMatrix(xgbooster, (xg_test_data->sb_dmats)[0], opts.c_str(), &output_shape,
-//                                               &output_dim, &output_result))
 
       // Maintain Memory statistics (independent from Google Benchmark)
       if(mem_stats && iter_c == 0){
@@ -352,6 +349,6 @@ static void BM_XGBOOST_BDTTesting(benchmark::State &state){
    outputFile->Close();
    delete outputFile;
 }
-BENCHMARK(BM_XGBOOST_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}});
+BENCHMARK(BM_XGBOOST_BDTTesting)->ArgsProduct({{2000, 1000, 400, 100}, {10, 8, 6, 4, 2}, {1, 4, 8, 16}});
 
 BENCHMARK_MAIN();
